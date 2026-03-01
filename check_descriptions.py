@@ -100,7 +100,7 @@ def extract_description_from_html(html: str) -> str:
         if txt:
             return txt
 
-    # 3) Najczęstsze miejsca w HTML (różne sklepy mają różnie)
+       # 3) Najczęstsze miejsca w HTML (różne sklepy mają różnie)
     candidates = [
         '[itemprop="description"]',
         "#description",
@@ -109,7 +109,8 @@ def extract_description_from_html(html: str) -> str:
         ".product__description",
         ".tabs-content",
     ]
-       found = []
+
+    found = []
 
     for sel in candidates:
         el = soup.select_one(sel)
@@ -121,7 +122,6 @@ def extract_description_from_html(html: str) -> str:
     if found:
         # preferuj dłuższy tekst (pełny opis), a nie krótki z "..."
         found_sorted = sorted(found, key=len, reverse=True)
-        # jeśli najdłuższy ma sensowną długość, bierzemy go
         return found_sorted[0]
 
     # 4) JSON-LD Product (czasem opis jest tam)
