@@ -135,7 +135,17 @@ def extract_description_from_html(html: str) -> str:
                 desc = norm_text(desc)
                 if desc:
                     return desc
+    # 5) Awaryjnie: opis bywa zwykłym tekstem między "Ilość" a "+ Więcej"
+    full_text = soup.get_text("\n", strip=True)
+    if "Ilość" in full_text and "+ Więcej" in full_text:
+        after_qty = full_text.split("Ilość", 1)[1]
+        between = after_qty.split("+ Więcej", 1)[0]
 
+        lines = [norm_text(x) for x in between.split("\n")]
+        lines = [x for x in lines if len(x) >= 20]  # odfiltruj śmieci
+
+        if lines:
+            return max(lines, key=len)  # zwykle najdłuższa linia to pełny opis
     return ""
 
 
