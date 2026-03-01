@@ -109,12 +109,20 @@ def extract_description_from_html(html: str) -> str:
         ".product__description",
         ".tabs-content",
     ]
+       found = []
+
     for sel in candidates:
         el = soup.select_one(sel)
         if el:
             txt = norm_text(el.get_text(" ", strip=True))
             if txt:
-                return txt
+                found.append(txt)
+
+    if found:
+        # preferuj dłuższy tekst (pełny opis), a nie krótki z "..."
+        found_sorted = sorted(found, key=len, reverse=True)
+        # jeśli najdłuższy ma sensowną długość, bierzemy go
+        return found_sorted[0]
 
     # 4) JSON-LD Product (czasem opis jest tam)
     for script in soup.select('script[type="application/ld+json"]'):
