@@ -81,7 +81,7 @@ def is_probably_product_url(url: str) -> bool:
         return False
 
     # Musi być w sekcji męskiej /on/ (bo Twoje linki są /on/…)
-    if not path.startswith("/on/"):
+    if not (path.startswith("/on/") or path.startswith("/ona/")):
         return False
 
     # Heurystyka: produkt zwykle ma liczby w URL
