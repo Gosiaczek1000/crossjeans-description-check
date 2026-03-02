@@ -86,76 +86,24 @@ def extract_product_links_from_category(html: str, base_url: str) -> list[str]:
 def extract_description_from_html(html: str) -> str:
     soup = BeautifulSoup(html, "lxml")
 
-    # 1) Meta og:description
-    og = soup.select_one('meta[property="og:description"]')
-    if og and og.get("content"):
-        txt = norm_text(og["content"])
-        if txt:
-            return txt
-
-    # 2) Meta description
-    md = soup.select_one('meta[name="description"]')
-    if md and md.get("content"):
-        txt = norm_text(md["content"])
-        if txt:
-            return txt
-
-       # 3) Najczęstsze miejsca w HTML (różne sklepy mają różnie)
-    candidates = [
-        '[itemprop="description"]',
-        "#description",
-        ".description",
-        ".product-description",
-        ".product__description",
-        ".tabs-content",
-    ]
-
-    found = []
-
-    for sel in candidates:
-        el = soup.select_one(sel)
-        if el:
-            txt = norm_text(el.get_text(" ", strip=True))
-            if txt:
-                found.append(txt)
-
-    if found:
-        # preferuj dłuższy tekst (pełny opis), a nie krótki z "..."
-        found_sorted = sorted(found, key=len, reverse=True)
-        return found_sorted[0]
-
-    # 4) JSON-LD Product (czasem opis jest tam)
-    for script in soup.select('script[type="application/ld+json"]'):
-        raw = script.string or ""
-        raw = raw.strip()
-        if not raw:
-            continue
-        try:
-            data = json.loads(raw)
-        except Exception:
-            continue
-
-        # data może być dict albo lista
-        blocks = data if isinstance(data, list) else [data]
-        for b in blocks:
-            if isinstance(b, dict) and (b.get("@type") == "Product" or "Product" in str(b.get("@type", ""))):
-                desc = b.get("description", "")
-                desc = norm_text(desc)
-                if desc:
-                    return desc
-    # 5) Awaryjnie: opis bywa zwykłym tekstem między "Ilość" a "+ Więcej"
+    # Najpewniejsze miejsce na CrossJeans:
+    # tekst między "Ilość" a "+ Więcej"
     full_text = soup.get_text("\n", strip=True)
+
     if "Ilość" in full_text and "+ Więcej" in full_text:
-        after_qty = full_text.split("Ilość", 1)[1]
-        between = after_qty.split("+ Więcej", 1)[0]
+        after = full_text.split("Ilość", 1)[1]
+        between = after.split("+ Więcej", 1)[0]
 
         lines = [norm_text(x) for x in between.split("\n")]
-        lines = [x for x in lines if len(x) >= 20]  # odfiltruj śmieci
+        lines = [x for x in lines if len(x) >= 20]
+
+        # usuń wersję urwaną z "..."
+        lines = [x for x in lines if not x.endswith("...")]
 
         if lines:
-            return max(lines, key=len)  # zwykle najdłuższa linia to pełny opis
-    return ""
+            return max(lines, key=len)
 
+    return ""
 
 def main() -> int:
     os.makedirs("outputs", exist_ok=True)
